@@ -1,74 +1,114 @@
 # Satisfactory Blueprints
 
-Version-controlled blueprint library for Satisfactory, shared directly with the
-game through a symlink so that saving a blueprint in-game creates a file in this
-repository.
+Version-controlled blueprint library, linked into Satisfactory per session so
+that saving a blueprint in-game writes a file in this repository.
 
 ## Why this exists
 
 Steam Cloud syncs Satisfactory **saves** but not **blueprints**. Inspecting
 `remotecache.vdf` for app 526870 shows 166 `.sav` entries and zero `.sbp`
-entries, so a machine rebuild or prefix reset loses the entire blueprint library
-while the save files come back automatically.
+entries, so a machine rebuild or prefix reset loses the blueprint library while
+save files come back automatically. A git repository closes that gap.
 
-A git repository closes that gap and gives every machine that clones it a full
-copy.
+## How the game finds blueprints
+
+Satisfactory reads from `SaveGames/blueprints/<session name>/`, where the
+session name comes from the save itself — `Sandifactory_autosave_1.sav` belongs
+to session `Sandifactory`. Blueprints are therefore scoped to a session, not
+shared globally.
+
+Each mapped session gets its own symlink into this repository:
+
+```
+SaveGames/blueprints/Trees and Riches -> <repo>/Trees and Riches
+SaveGames/blueprints/Starter Map      -> <repo>/Starter Map
+```
+
+Linking individual folders rather than the whole `blueprints/` directory keeps
+each session's library separate, and lets several sessions share one folder.
 
 ## Layout
 
-Blueprints are grouped into one directory per game session, matching how
-Satisfactory organises them:
-
 ```
-1.2-forest/          Fields of Folly/     Forestry Department/
-Starter Map/         Stoned for Success/  Trees and Riches/
-chaotifactory/       platform-factory/    ~archive/
+_master/     every blueprint, one copy each (637)
+_variants/   older versions of blueprints whose name has several distinct contents (46)
 ```
 
-Each blueprint is a `.sbp` file paired with a `.sbpcfg` holding its metadata.
-Both are required — a `.sbp` without its `.sbpcfg` does not appear in-game.
+Satisfactory scopes blueprints per session, so a library used in several worlds
+was previously stored once per world — 3,230 files holding 668 unique
+blueprints. `_master` holds one copy of each and every session links to it, so a
+blueprint saved in any world is immediately available in all of them.
 
-## How the game reaches these files
+Where one name carried several distinct contents, the newest is the master copy
+and the rest are kept under `_variants/<name>/<source-folder>-<hash>.sbp`.
+Nothing is discarded; `_variants` is simply not linked into any session.
 
-Satisfactory reads blueprints from inside its Proton prefix. That path is a
-symlink to this repository:
+Two blueprints have no `.sbpcfg` partner anywhere — `acrifib - 600MW Power Plant
+Mk.1` and `coal generator x36`. They will not appear in-game. This predates the
+deduplication; no config for either exists in any recovered collection.
+
+## Rebuilding the deduplication
+
+`dedupe-blueprints.sh` collapses per-session folders into `_master` and
+`_variants`. It is only needed if per-session folders reappear, such as after
+importing another machine's library.
+
+## Configuring the links
+
+`links.conf` maps sessions to folders:
 
 ```
-/mnt/games/SteamLibrary/steamapps/compatdata/526870/pfx/drive_c/users/steamuser/
-    AppData/Local/FactoryGame/Saved/SaveGames/blueprints
-        -> /home/drauku/games/satisfactory/blueprints
+<session name> = <repo folder>
 ```
 
-Wine follows native symlinks, so the game reads and writes through it with no
-special configuration. New blueprints appear in `git status` immediately.
+Several sessions may point at the same folder. Because Satisfactory copies
+blueprints per session, a library duplicated across five worlds occupies five
+copies on disk; mapping those sessions to one shared folder stores it once and
+keeps every world in sync.
 
-The repository lives outside the prefix on purpose. Steam owns everything under
-`compatdata/`, and a Proton version change or a "Delete Proton files" action
-recreates that tree from scratch.
-
-## Restoring the link
-
-A prefix rebuild replaces the symlink with an ordinary directory. To repair it:
+To see what is available:
 
 ```bash
-./restore-prefix-symlink.sh
+./link-blueprints.sh --list
 ```
 
-The script is safe to run repeatedly. If it finds a real directory where the
-symlink belongs, it copies any blueprints inside into this repository before
-replacing it, and keeps the original alongside as
-`blueprints.replaced-<timestamp>` rather than deleting it.
+That prints session names discovered in your saves, the folders in this
+repository, and the links currently in the prefix. Session discovery is
+best-effort — older saves carry a `sessionName=` token, newer ones do not — so
+treat it as a hint and confirm names against your save files.
 
-Close Satisfactory first. The game caches the blueprint list at load and
-rewrites the directory on exit, which would discard anything added underneath a
+To apply the mapping:
+
+```bash
+./link-blueprints.sh --apply
+```
+
+Safe to run repeatedly. Where a real directory sits in place of a link, its
+blueprints are copied into the mapped repo folder first, and the directory is
+kept alongside as `<name>.replaced-<timestamp>` rather than deleted.
+
+Close Satisfactory before applying. The game caches the blueprint list at load
+and rewrites the directory on exit, discarding anything added underneath a
 running instance.
+
+## Recovering after a Proton update
+
+Steam owns everything under `compatdata/`. A Proton version change or a "Delete
+Proton files" action recreates that tree and removes the symlinks. The
+repository is outside the prefix for this reason, so recovery is:
+
+```bash
+./link-blueprints.sh --apply
+```
 
 ## Binary files
 
-`.gitattributes` marks `.sbp` and `.sbpcfg` as binary. Without it, git may apply
-line-ending conversion and corrupt them.
+`.gitattributes` marks `.sbp` and `.sbpcfg` as binary; without it git may apply
+line-ending conversion and corrupt them. Each blueprint is a `.sbp` paired with
+a `.sbpcfg` holding its metadata — a `.sbp` without its partner does not appear
+in-game.
 
-At roughly 66 MB across ~3,200 blueprints, with a median file around 9 KB, plain
-git handles this comfortably. Blueprints are written once rather than edited
-repeatedly, so history accumulates as new objects instead of deltas over
-changing binaries, and Git LFS is not needed.
+At roughly 66 MB with a median file near 9 KB, plain git handles this
+comfortably. Blueprints are written once rather than edited repeatedly, so
+history accumulates as new objects rather than deltas over changing binaries,
+and Git LFS is unnecessary.
