@@ -6,3 +6,6 @@
 # Blueprint saves the game writes mid-session, discarded on exit.
 *.tmp
 *.partial
+
+# Local session mapping; keep your own copy untracked.
+links.conf

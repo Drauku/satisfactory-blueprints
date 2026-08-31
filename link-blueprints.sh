@@ -39,7 +39,9 @@ cmd_list() {
 cmd_apply() {
     game_running && die "Satisfactory is running. Close it; the game rewrites this directory on exit."
     [[ -d "$SAVED" ]] || die "Save directory not found: $SAVED"$'\n'"Launch the game once to recreate the prefix."
-    [[ -f "$CONF" ]] || die "Missing config: $CONF"
+    if [[ ! -f "$CONF" ]]; then
+        die "No links.conf found."$'\n'"Copy the template and edit it:"$'\n'"  cp links.conf.example links.conf"
+    fi
 
     # A whole-directory symlink or a stray file here blocks per-session links.
     if [[ -L "$LINKDIR" ]]; then
