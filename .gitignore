@@ -1,0 +1,8 @@
+# Editor and desktop-environment scratch files.
+*~
+.*.swp
+.DS_Store
+
+# Blueprint saves the game writes mid-session, discarded on exit.
+*.tmp
+*.partial

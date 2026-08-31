@@ -1,0 +1,3 @@
+# Satisfactory blueprint files are binary; prevent line-ending or encoding conversion.
+*.sbp     binary
+*.sbpcfg  binary
