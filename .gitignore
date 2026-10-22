@@ -9,3 +9,9 @@
 
 # Local session mapping; keep your own copy untracked.
 links.conf
+
+# Tool dependencies, installed with npm install.
+node_modules/
+
+# Backups that bp-convert writes next to a converted blueprint folder.
+*-backup-before-*/
