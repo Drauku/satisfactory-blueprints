@@ -79,7 +79,7 @@ cmd_apply() {
         ln -s "$target" "$link"
         echo "  $session -> $folder ($(find "$target" -name '*.sbp' | wc -l) blueprints)"
         linked=$((linked+1))
-    done < "$CONF"
+    done < <(cat "$CONF"; echo)
 
     echo "Linked $linked session(s); $skipped skipped."
 }
