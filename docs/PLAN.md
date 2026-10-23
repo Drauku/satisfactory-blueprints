@@ -81,16 +81,18 @@ scripts (or keeping them as thin wrappers during the transition).
 
 ## Phase 2: the addon
 
-- **Load-time fix (scaffolded).** `Mods/BlueprintWorldBridge` uses FactoryGame's
-  blueprint-specific `UFGSaveSystem::AddBlueprintMapRedirector` API when
-  `AFGBlueprintSubsystem` begins play. This is narrower than rewriting stored data in a
-  `LoadStoredBlueprint` hook: it leaves blueprint files untouched and asks the game's own
-  deserializer to resolve known source levels to the active world.
+- **Load-time fix (scaffolded).** `Mods/BlueprintWorldBridge` hooks FactoryGame's
+  blueprint-specific `UFGSaveSystem::FindNewBlueprintWorldMapName` lookup. When no existing
+  redirect matches, it resolves any stored world name to the active world, so there is no
+  list of known worlds to maintain (the ficsit.app catalogue has at least 10 other map mods).
+  This is narrower than rewriting stored data in a `LoadStoredBlueprint` hook: it leaves
+  blueprint files untouched and lets the game's own deserializer do the resolving. It also
+  warns if a game update renames the standard `Persistent_Level` world.
 - **Cost.** C++ against SML's custom Unreal Engine with the Windows toolchain;
   building from Linux is awkward.
 - **Remaining validation.** Build against the current Windows starter project, package with
-  Alpakit, and run the cross-world plus multiplayer matrix in the mod README. If the current
-  game no longer honors blueprint map redirectors for object references, fall back to a
+  Alpakit, and run the cross-world plus multiplayer matrix in the mod README. If the game does not
+  call `FindNewBlueprintWorldMapName` on every blueprint load, fall back to a
   `LoadStoredBlueprint`-adjacent deserialization hook.
 - **Alternative.** The PEP mod author (`maker_dude`) may add the same fix to PEP,
   which would cover the PEP case without a separate mod.
