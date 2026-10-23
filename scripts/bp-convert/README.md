@@ -20,12 +20,15 @@ one entry in the `FORMATS` table at the top of the script.
 ## Usage
 
     npm install
-    node convert-blueprints.mjs "<blueprint folder>" --to normal|pep|rwg [--replace] [--dry-run] [name ...]
+    node convert-blueprints.mjs "<blueprint folder>" --to normal|pep|rwg [--replace] [--archive DIR] [--dry-run] [name ...]
 
 - `name ...` limits the run to those blueprints (file name without `.sbp`).
 - `--dry-run` lists what would change and writes nothing.
 - Without `--replace` the converted blueprints are written next to the originals.
-- With `--replace` the originals move to `<blueprint folder>-backup-before-<target>`.
+- With `--replace` the originals move to the archive folder.
+- Originals are kept in `archive/<folder>-backup-before-<target>`, where `archive/` sits next to
+  the blueprint folder (for `_master` in this repo, that is the repo's `archive/`). `--archive DIR`
+  uses another location.
 - A blueprint that keeps its name is overwritten in place and is always backed up first.
 - The script lists everything it will do and asks before writing. Close Satisfactory first;
   the game rewrites blueprint folders when it exits.
@@ -36,7 +39,7 @@ one entry in the `FORMATS` table at the top of the script.
   object count, use only the target level name, and have no more dangling references than before.
 - Blueprints already in the target format and name, with mixed level names, or whose target
   name already exists (compared without case, as Windows does) are skipped and reported.
-- The backup step refuses to overwrite files already in the backup folder.
+- The archive step refuses to overwrite files already in the archive folder.
 
 ## Tested
 

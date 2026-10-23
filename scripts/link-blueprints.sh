@@ -4,7 +4,9 @@
 # session gets its own symlink rather than the whole directory being shared.
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# This script lives in scripts/; the blueprint folders and links.conf are at the repo root.
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ARCHIVE="$REPO/archive"
 SAVED="/mnt/games/SteamLibrary/steamapps/compatdata/526870/pfx/drive_c/users/steamuser/AppData/Local/FactoryGame/Saved/SaveGames"
 LINKDIR="$SAVED/blueprints"
 CONF="$REPO/links.conf"
@@ -21,12 +23,18 @@ discover_sessions() {
     done | sort -u | grep -v '^$'
 }
 
+# Top-level repo folders that hold blueprints, excluding tooling, docs and the archive.
+blueprint_folders() {
+    find "$REPO" -mindepth 1 -maxdepth 1 -type d \
+        -not -name '.git' -not -name scripts -not -name docs -not -name archive -printf '%P\n' | sort
+}
+
 cmd_list() {
     echo "Sessions found in saves:"
     discover_sessions | sed 's/^/  /' || true
     echo
     echo "Blueprint folders in this repo:"
-    find "$REPO" -mindepth 1 -maxdepth 1 -type d -not -name '.git' -printf '  %P\n' | sort
+    blueprint_folders | sed 's/^/  /'
     echo
     echo "Links currently in the prefix:"
     if [[ -d "$LINKDIR" && ! -L "$LINKDIR" ]]; then
@@ -68,11 +76,13 @@ cmd_apply() {
             skipped=$((skipped+1)); continue
         fi
 
-        # A real directory here holds blueprints saved while the link was absent.
+        # A real directory here holds blueprints saved while the link was absent;
+        # new ones are merged into the target and the directory is kept in archive/.
         if [[ -d "$link" && ! -L "$link" ]]; then
             echo "  rescuing blueprints from real dir: $session"
             rsync -rlt --ignore-existing "$link/" "$target/"
-            mv "$link" "$link.replaced-$(date +%Y%m%d-%H%M%S)"
+            mkdir -p "$ARCHIVE"
+            mv "$link" "$ARCHIVE/$session.replaced-$(date +%Y%m%d-%H%M%S)"
         fi
 
         [[ -L "$link" ]] && rm -f "$link"

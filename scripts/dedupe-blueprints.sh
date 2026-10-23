@@ -4,21 +4,24 @@
 # and the others are kept under _variants/<name>/ so no version is discarded.
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# This script lives in scripts/; the blueprint folders are at the repo root.
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MASTER="$REPO/_master"
 VARIANTS="$REPO/_variants"
 
+# Folders that never hold library blueprints: git data, tooling, docs, and archived copies.
+EXCLUDE=(-not -path "$REPO/.git/*" -not -path "$REPO/scripts/*" -not -path "$REPO/docs/*"
+         -not -path "$REPO/archive/*" -not -path "$MASTER/*" -not -path "$VARIANTS/*")
+
 mkdir -p "$MASTER" "$VARIANTS"
 
-mapfile -t NAMES < <(find "$REPO" -name '*.sbp' -not -path "$REPO/.git/*" \
-    -not -path "$MASTER/*" -not -path "$VARIANTS/*" -printf '%f\n' | sort -u)
+mapfile -t NAMES < <(find "$REPO" -name '*.sbp' "${EXCLUDE[@]}" -printf '%f\n' | sort -u)
 
 echo "Distinct blueprint names: ${#NAMES[@]}"
 divergent=0
 
 for name in "${NAMES[@]}"; do
-    mapfile -t paths < <(find "$REPO" -name "$name" -not -path "$REPO/.git/*" \
-        -not -path "$MASTER/*" -not -path "$VARIANTS/*" -printf '%T@\t%p\n' | sort -rn | cut -f2-)
+    mapfile -t paths < <(find "$REPO" -name "$name" "${EXCLUDE[@]}" -printf '%T@\t%p\n' | sort -rn | cut -f2-)
 
     newest="${paths[0]}"
     cp -p "$newest" "$MASTER/$name"

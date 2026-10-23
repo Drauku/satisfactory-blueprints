@@ -1,60 +1,32 @@
 # Satisfactory Blueprints
 
-A version-controlled blueprint library, linked into Satisfactory so that saving
-a blueprint in-game writes a file here.
-
-Steam Cloud syncs Satisfactory saves but not blueprints, so this repository is
-the backup for them.
+A version-controlled Satisfactory blueprint library, linked into the game so
+that saving a blueprint in game writes a file here.
 
 ## Layout
 
 ```
-_master/     the blueprint library, one copy of each
-_variants/   alternate versions of blueprints that share a name
+_master/            the blueprint library, one copy of each
+_variants/          alternate versions of blueprints that share a name
+scripts/            tools for linking, deduplicating and converting blueprints
+docs/               documentation, including the tooling plan (docs/PLAN.md)
+archive/            old and set-aside blueprints (local, not tracked)
+links.conf.example  template for the local session mapping (links.conf)
 ```
 
-Each blueprint is a `.sbp` file paired with a `.sbpcfg`. Both are required — a
-`.sbp` without its partner does not appear in-game.
+Each blueprint is a `.sbp` file paired with a `.sbpcfg`. Both are required; a
+`.sbp` without its partner does not appear in game.
 
-## Usage
+## Scripts
 
-Satisfactory reads blueprints from `SaveGames/blueprints/<session name>/`, so
-blueprints are scoped to a session. `links.conf` maps each session to a folder
-here, and several sessions may share one folder:
+| Script | Purpose |
+|---|---|
+| `scripts/link-blueprints.sh` | Links game sessions to folders in this repo ([docs](docs/session-links.md)) |
+| `scripts/dedupe-blueprints.sh` | Collapses per-session copies into `_master` and `_variants` ([docs](docs/session-links.md#deduplicating)) |
+| `scripts/bp-convert/` | Converts blueprints between normal, PEP/Skyblock and RWG maps ([docs](scripts/bp-convert/README.md)) |
 
-```
-<session name> = <repo folder>
-```
-
-`links.conf` is local and not tracked, since session names differ per machine.
-Start from the template:
-
-```bash
-cp links.conf.example links.conf
-```
-
-Apply the mapping:
-
-```bash
-./link-blueprints.sh --apply
-```
-
-`--list` shows the sessions found in your saves, the folders available here, and
-the links currently in place. Both are safe to run repeatedly.
-
-Close Satisfactory first. The game caches the blueprint list at load and
-rewrites the directory on exit.
-
-## After a Proton update
-
-Steam owns the prefix, so a Proton change or a prefix rebuild removes the
-symlinks. Re-run `./link-blueprints.sh --apply` to restore them.
-
-## Other scripts
-
-`dedupe-blueprints.sh` collapses per-session folders into `_master` and
-`_variants`. It is only needed if per-session copies reappear, such as when
-importing a library from another machine.
+Close Satisfactory before running any of them; the game rewrites the blueprint
+folders when it exits.
 
 ## Notes
 

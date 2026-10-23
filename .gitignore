@@ -13,5 +13,6 @@ links.conf
 # Tool dependencies, installed with npm install.
 node_modules/
 
-# Backups that bp-convert writes next to a converted blueprint folder.
-*-backup-before-*/
+# Archived blueprints, plus the originals that scripts/bp-convert and
+# scripts/link-blueprints.sh set aside before replacing anything.
+archive/

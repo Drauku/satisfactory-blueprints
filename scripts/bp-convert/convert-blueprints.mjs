@@ -19,15 +19,24 @@ const USAGE = `usage: node convert-blueprints.mjs <blueprint-folder> --to ${Obje
 
 ${Object.entries(FORMATS).map(([k, f]) =>
   `  --to ${k.padEnd(9)} ${f.label}: ${f.level}, ${f.prefix ? `"${f.prefix}" prefix` : 'no prefix'}`).join('\n')}
-  --replace      move the originals to a backup folder (default keeps them in place)
+  --replace      move the originals to the archive (default keeps them in place)
+  --archive DIR  where originals are kept (default: archive/ next to the blueprint folder)
   --dry-run      list what would change, write nothing
   name ...       only these blueprints (file name without .sbp); default is the whole folder`;
 
 const args = process.argv.slice(2);
 const flag = name => args.includes(name);
-const toIndex = args.indexOf('--to');
-const target = toIndex >= 0 ? args[toIndex + 1] : undefined;
-const positional = args.filter((a, i) => !a.startsWith('--') && i !== toIndex + 1);
+// Returns the value after an option such as --to, and records its index so it is not a name.
+const valueIndexes = new Set();
+const optionValue = name => {
+  const i = args.indexOf(name);
+  if (i < 0) return undefined;
+  valueIndexes.add(i + 1);
+  return args[i + 1];
+};
+const target = optionValue('--to');
+const archiveArg = optionValue('--archive');
+const positional = args.filter((a, i) => !a.startsWith('--') && !valueIndexes.has(i));
 const [dirArg, ...onlyNames] = positional;
 if (!dirArg || !FORMATS[target]) {
   console.error(USAGE);
@@ -36,7 +45,9 @@ if (!dirArg || !FORMATS[target]) {
 const dryRun = flag('--dry-run');
 const replace = flag('--replace');
 const srcDir = path.resolve(dirArg);
-const backupDir = `${srcDir.replace(/[\\/]+$/, '')}-backup-before-${target}`;
+// Originals go to <archive>/<folder>-backup-before-<target>, e.g. archive/_master-backup-before-pep.
+const archiveRoot = archiveArg ? path.resolve(archiveArg) : path.join(path.dirname(srcDir), 'archive');
+const backupDir = path.join(archiveRoot, `${path.basename(srcDir)}-backup-before-${target}`);
 
 // The parser takes ArrayBuffers; Node Buffers can share a larger pool, so slice out the exact bytes.
 const toArrayBuffer = b => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
