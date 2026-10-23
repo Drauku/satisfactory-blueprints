@@ -1,0 +1,33 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "SemVersion": "0.1.0",
+  "GameVersion": ">=491125",
+  "FriendlyName": "Blueprint World Bridge",
+  "Description": "Loads factory blueprints across worlds that use different persistent level names.",
+  "Category": "Quality of Life",
+  "CreatedBy": "drauku",
+  "CreatedByURL": "",
+  "DocsURL": "",
+  "MarketplaceURL": "",
+  "SupportURL": "",
+  "CanContainContent": false,
+  "IsBetaVersion": true,
+  "IsExperimentalVersion": true,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "BlueprintWorldBridge",
+      "Type": "Runtime",
+      "LoadingPhase": "PostDefault"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "SML",
+      "Enabled": true,
+      "SemVersion": "^3.12.0"
+    }
+  ]
+}

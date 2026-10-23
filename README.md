@@ -24,6 +24,7 @@ Each blueprint is a `.sbp` file paired with a `.sbpcfg`. Both are required; a
 | `scripts/link-blueprints.sh` | Links game sessions to folders in this repo ([docs](docs/session-links.md)) |
 | `scripts/dedupe-blueprints.sh` | Collapses per-session copies into `_master` and `_variants` ([docs](docs/session-links.md#deduplicating)) |
 | `scripts/bp-convert/` | Converts blueprints between normal, PEP/Skyblock and RWG maps ([docs](scripts/bp-convert/README.md)) |
+| `Mods/BlueprintWorldBridge/` | Experimental SML load-time world redirect ([docs](Mods/BlueprintWorldBridge/README.md)) |
 
 Close Satisfactory before running any of them; the game rewrites the blueprint
 folders when it exits.
